@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <title>Presensi Instruktur PVN</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .container-card {
+        width: 100%;
+        max-width: 450px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        position: relative;
+        z-index: 1;
+      }
+
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateY(40px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .form-label { font-weight: 600; color: #4a4a4a; }
+      .text-glow { text-shadow: 0px 0px 15px rgba(255, 255, 255, 0.6); }
+      
+      .btn-primary {
+        background: linear-gradient(to right, #5e60ce, #6930c3);
+        border: none;
+        transition: transform 0.2s;
+      }
+      .btn-primary:hover { transform: scale(1.02); background: linear-gradient(to right, #4e4fcf, #5a28b0); }
+      
+      .hidden { display: none !important; }
+      
+      video, canvas {
+        width: 100%;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        margin-top: 15px;
+      }
+
+      /* --- Styling Pop-up Modal WFO/WFA --- */
+      .custom-modal-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(5px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .custom-modal-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .custom-modal {
+        background: white;
+        width: 90%;
+        max-width: 350px;
+        border-radius: 20px;
+        padding: 25px;
+        text-align: center;
+        transform: scale(0.8);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+      }
+
+      .custom-modal-overlay.active .custom-modal {
+        transform: scale(1);
+      }
+
+      .modal-icon { font-size: 3rem; margin-bottom: 10px; display: block; }
+      .modal-title { font-weight: 700; font-size: 1.2rem; color: #333; margin-bottom: 5px; }
+      .modal-desc { font-size: 0.9rem; color: #666; margin-bottom: 20px; }
+
+      .choice-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 10px;
+        border: 2px solid #eee;
+        border-radius: 12px;
+        background: #fff;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 600;
+        color: #555;
+      }
+
+      .choice-btn:hover { border-color: #667eea; background: #f8f9fe; }
+      .choice-btn.wfo { border-left: 5px solid #667eea; }
+      .choice-btn.wfa { border-left: 5px solid #764ba2; }
+      
+      .status-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        margin-left: 10px;
+        color: white;
+      }
+      .bg-wfo { background: #667eea; }
+      .bg-wfa { background: #764ba2; }
+    </style>
+  </head>
+
+  <body>
+    <div class="container-card">
+      <h3 class="text-center mb-4 text-glow">Presensi Instruktur PVN Batch 2 Tahun 2026<br><small style="font-size: 0.6em;">Satpel PVP Mamuju</small></h3>
+      <div id="loginDiv">
+        <div class="mb-3">
+          <label for="password" class="form-label">Masukkan Password</label>
+          <div class="input-group">
+            <input type="password" class="form-control" id="password" placeholder="password">
+            <span class="input-group-text" onclick="togglePassword()" style="cursor: pointer;">👁️</span>
+          </div>
+        </div>
+        <div class="d-grid">
+          <button class="btn btn-primary btn-lg" onclick="login()">🔓 Masuk</button>
+        </div>
+        <p id="error" class="text-danger mt-3 text-center small"></p>
+      </div>
+
+      <div id="dataDiv" class="hidden">
+        <div class="alert alert-success py-2 text-center shadow-sm">✅ Login Berhasil</div>
+        <ul class="list-group mb-4 shadow-sm" style="border-radius: 10px; overflow: hidden;">
+          <li class="list-group-item d-flex justify-content-between"><span>Nama:</span> <strong id="nama"></strong></li>
+          <li class="list-group-item d-flex justify-content-between"><span>Program Pelatihan:</span> <strong id="program_pelatihan"></strong></li>
+          <li class="list-group-item d-flex justify-content-between"><span>Kejuruan:</span> <strong id="kejuruan"></strong></li>
+          <li class="list-group-item d-flex justify-content-between"><span>PIC:</span> <strong id="pic"></strong></li>
+        </ul>
+
+        <div class="radio-group mb-3">
+          <label class="form-label mb-2">Pilih Tipe Presensi:</label>
+          
+          <div class="row g-2">
+            <div class="col-6">
+              <input type="radio" class="btn-check" name="tipePresensi" id="datang" value="Datang" autocomplete="off" onchange="handleRadioChange(this)">
+              <label class="btn btn-outline-primary w-100" for="datang">📅 Datang</label>
+            </div>
+            <div class="col-6">
+              <input type="radio" class="btn-check" name="tipePresensi" id="pulang" value="Pulang" autocomplete="off" onchange="handleRadioChange(this)">
+              <label class="btn btn-outline-primary w-100" for="datang">📅 Pulang</label>
+            </div>
+            <div class="col-6">
+              <input type="radio" class="btn-check" name="tipePresensi" id="sakit" value="Sakit" autocomplete="off" onchange="handleRadioChange(this)">
+              <label class="btn btn-outline-warning w-100" for="sakit">🏥 Sakit</label>
+            </div>
+            <div class="col-6">
+              <input type="radio" class="btn-check" name="tipePresensi" id="izin" value="Izin" autocomplete="off" onchange="handleRadioChange(this)">
+              <label class="btn btn-outline-info w-100" for="izin">📩 Izin</label>
+            </div>
+          </div>
+
+          <div id="workStatusDisplay" class="mt-3 text-center hidden">
+              Mode: <span id="statusBadge" class="status-badge"></span>
+          </div>
+
+          <p id="tipeError" class="text-danger mt-2 small text-center hidden">⚠️ Harap pilih tipe presensi!</p>
+          
+          <div id="keteranganDiv" class="mt-3 hidden">
+            <label for="keterangan" class="form-label">Catatan / Aktivitas:</label>
+            <input type="text" class="form-control" id="keterangan" placeholder="Input Keterangan atau Aktivitas">
+          </div>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button class="btn btn-secondary" id="ambilGambarBtn" onclick="startCamera()" disabled>📷 Buka Kamera</button>
+        </div>
+
+        <video id="video" autoplay playsinline class="hidden"></video>
+        <canvas id="canvas" class="hidden"></canvas>
+
+        <div class="d-grid gap-2 mt-3">
+          <button id="captureBtn" class="btn btn-warning hidden" onclick="captureImage()">📸 Ambil Foto</button>
+          <button id="uploadBtn" class="btn btn-success hidden" onclick="getLocationAndUpload()">🚀 Kirim Presensi</button>
+        </div>
+
+        <div id="loading" class="text-center mt-3 hidden">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2 small text-muted">Memuat data...</p>
+        </div>
+
+        <div id="successMsg" class="alert alert-light text-center mt-3 hidden shadow-sm"></div>
+      </div>
+    </div>
+
+    <!-- Modal WFO/WFA -->
+    <div class="custom-modal-overlay" id="modalWorkMode">
+      <div class="custom-modal">
+        <span class="modal-icon">🏢</span>
+        <h3 class="modal-title">Konfirmasi Metode Pelatihan</h3>
+        <p class="modal-desc">Di mana Anda Mengajar hari ini?</p>
+        
+        <button class="choice-btn wfo" onclick="selectWorkMode('WFO')">
+          🏢 <strong>Satpel PVP Mamuju</strong><br>
+          <small style="font-size: 0.75em; color: #888;">Wajib berada di area satpel</small>
+        </button>
+        
+        <button class="btn btn-link btn-sm text-secondary mt-2" onclick="cancelModal()">Batal</button>
+      </div>
+    </div>
+
+    <script> 
+      const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxeBUnNwG6jULBaoQv5NzcnN1iPmNdaymmQbCTCI_vXTeF1kis6aYiY2cyMdY36i9QX/exec";
+
+      let userData = {};
+      let imageBase64 = "";
+      let tipePresensi = "";
+      let statusKerja = ""; 
+
+      function togglePassword() {
+        const x = document.getElementById("password");
+        x.type = x.type === "password" ? "text" : "password";
+      }
+
+      async function login() {
+        const password = document.getElementById("password").value;
+        const btn = document.querySelector('button[onclick="login()"]');
+        btn.innerHTML = "⌛ Mengecek...";
+        btn.disabled = true;
+
+        try {
+          const response = await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: "login", password: password })
+          });
+          
+          const data = await response.json();
+          btn.innerHTML = "🔓 Masuk";
+          btn.disabled = false;
+
+          if (data.status) {
+            userData = data;
+            document.getElementById("nama").innerText = data.nama;
+            document.getElementById("program_pelatihan").innerText = data.program_pelatihan;
+            document.getElementById("kejuruan").innerText = data.kejuruan;
+            document.getElementById("instruktur").innerText = data.instruktur;
+            document.getElementById("pic").innerText = data.pic;
+
+            document.getElementById("loginDiv").classList.add("hidden");
+            document.getElementById("dataDiv").classList.remove("hidden");
+          } else {
+            document.getElementById("error").innerText = "❌ Password Salah!";
+          }
+        } catch (err) {
+          btn.innerHTML = "🔓 Masuk";
+          btn.disabled = false;
+          document.getElementById("error").innerText = "❌ Gagal terhubung ke server.";
+        }
+      }
+
+      function handleRadioChange(element) {
+        tipePresensi = element.value;
+        const modal = document.getElementById('modalWorkMode');
+
+        statusKerja = ""; 
+        document.getElementById("workStatusDisplay").classList.add("hidden");
+        document.getElementById("ambilGambarBtn").disabled = true;
+        document.getElementById("keteranganDiv").classList.add("hidden");
+
+        if (tipePresensi === "Datang" || tipePresensi === "Pulang") {
+          modal.classList.add("active");
+        } else {
+          statusKerja = "-"; 
+          document.getElementById("ambilGambarBtn").disabled = false;
+          document.getElementById("keteranganDiv").classList.remove("hidden");
+        }
+      }
+
+      function selectWorkMode(mode) {
+        statusKerja = mode;
+        const modal = document.getElementById('modalWorkMode');
+        modal.classList.remove("active");
+
+        const badge = document.getElementById("statusBadge");
+        badge.innerText = "Luring"; // Disesuaikan dengan status
+        badge.className = "status-badge " + (mode === "WFO" ? "bg-wfo" : "bg-wfa");
+        
+        document.getElementById("workStatusDisplay").classList.remove("hidden");
+        document.getElementById("ambilGambarBtn").disabled = false; 
+
+        if(tipePresensi === "Pulang") {
+          document.getElementById("keteranganDiv").classList.remove("hidden");
+        }
+      } 
+
+      function cancelModal() {
+        document.getElementById('modalWorkMode').classList.remove("active");
+        const radios = document.getElementsByName("tipePresensi");
+        for(let r of radios) r.checked = false;
+        tipePresensi = "";
+      }
+      
+      function resetSelection() {
+         const radios = document.getElementsByName("tipePresensi");
+         for(let r of radios) r.checked = false;
+         tipePresensi = "";
+         statusKerja = "";
+         document.getElementById("workStatusDisplay").classList.add("hidden");
+         document.getElementById("ambilGambarBtn").disabled = true;
+         document.getElementById("keteranganDiv").classList.add("hidden");
+         
+         document.getElementById("video").classList.add("hidden");
+         document.getElementById("canvas").classList.add("hidden");
+         document.getElementById("captureBtn").classList.add("hidden");
+         document.getElementById("uploadBtn").classList.add("hidden");
+      }
+
+      function startCamera() {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+          .then(stream => {
+            const video = document.getElementById('video');
+            video.srcObject = stream;
+            video.classList.remove("hidden");
+            document.getElementById('captureBtn').classList.remove("hidden");
+            document.getElementById('ambilGambarBtn').classList.add("hidden");
+          })
+          .catch(err => alert("Gagal akses kamera: " + err));
+      }
+
+      function captureImage() {
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        
+        imageBase64 = canvas.toDataURL("image/png");
+        canvas.classList.remove("hidden");
+        video.classList.add("hidden");
+
+        const stream = video.srcObject;
+        if(stream) stream.getTracks().forEach(track => track.stop());
+
+        document.getElementById('captureBtn').classList.add("hidden");
+        document.getElementById('uploadBtn').classList.remove("hidden");
+      }
+
+      function getLocationAndUpload() {
+        if (!navigator.geolocation) return alert("Browser tidak support GPS!");
+
+        document.getElementById('loading').classList.remove("hidden");
+        document.getElementById('uploadBtn').classList.add("hidden");
+
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+          const payload = { 
+            nama: userData.nama,
+            program_pelatihan: userData.program_pelatihan,
+            kejuruan: userData.kejuruan,
+            instruktur: userData.instruktur,
+            tipePresensi: tipePresensi,
+            statusKerja: statusKerja,
+            keteranganUser: document.getElementById("keterangan").value,
+            imageData: imageBase64,
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            pic: userData.pic
+          };
+
+          try {
+            const response = await fetch(APPS_SCRIPT_URL, {
+              method: "POST",
+              body: JSON.stringify({ action: "upload", data: payload })
+            });
+            const res = await response.json();
+
+            document.getElementById('loading').classList.add("hidden");
+            const msgDiv = document.getElementById('successMsg');
+            msgDiv.innerHTML = res.message;
+            msgDiv.classList.remove("hidden");
+
+            if(res.message.includes("✅")) {
+               document.getElementById("canvas").classList.add("hidden");
+            } else {
+               document.getElementById("uploadBtn").classList.remove("hidden");
+            }
+          } catch (err) {
+            document.getElementById('loading').classList.add("hidden");
+            document.getElementById('uploadBtn').classList.remove("hidden");
+            alert("Gagal mengirim presensi: " + err);
+          }
+        }, err => {
+            document.getElementById('loading').classList.add("hidden");
+            document.getElementById('uploadBtn').classList.remove("hidden");
+            alert("Gagal dapat lokasi: " + err.message);
+        });
+      }
+    </script>
+  </body>
+</html>
