@@ -16,7 +16,6 @@
         align-items: center;
         justify-content: center;
       }
-
       .container-card {
         width: 100%;
         max-width: 450px;
@@ -28,12 +27,10 @@
         position: relative;
         z-index: 1;
       }
-
       @keyframes slideUp {
         from { opacity: 0; transform: translateY(40px); }
         to { opacity: 1; transform: translateY(0); }
       }
-
       .form-label { font-weight: 600; color: #4a4a4a; }
       .text-glow { text-shadow: 0px 0px 15px rgba(255, 255, 255, 0.6); }
       
@@ -52,8 +49,6 @@
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         margin-top: 15px;
       }
-
-      /* --- Styling Pop-up Modal WFO/WFA --- */
       .custom-modal-overlay {
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
@@ -67,12 +62,10 @@
         pointer-events: none;
         transition: opacity 0.3s ease;
       }
-
       .custom-modal-overlay.active {
         opacity: 1;
         pointer-events: all;
       }
-
       .custom-modal {
         background: white;
         width: 90%;
@@ -84,15 +77,12 @@
         transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         box-shadow: 0 15px 35px rgba(0,0,0,0.25);
       }
-
       .custom-modal-overlay.active .custom-modal {
         transform: scale(1);
       }
-
       .modal-icon { font-size: 3rem; margin-bottom: 10px; display: block; }
       .modal-title { font-weight: 700; font-size: 1.2rem; color: #333; margin-bottom: 5px; }
       .modal-desc { font-size: 0.9rem; color: #666; margin-bottom: 20px; }
-
       .choice-btn {
         display: flex;
         align-items: center;
@@ -108,7 +98,6 @@
         font-weight: 600;
         color: #555;
       }
-
       .choice-btn:hover { border-color: #667eea; background: #f8f9fe; }
       .choice-btn.wfo { border-left: 5px solid #667eea; }
       .choice-btn.wfa { border-left: 5px solid #764ba2; }
@@ -163,7 +152,7 @@
             </div>
             <div class="col-6">
               <input type="radio" class="btn-check" name="tipePresensi" id="pulang" value="Pulang" autocomplete="off" onchange="handleRadioChange(this)">
-              <label class="btn btn-outline-primary w-100" for="datang">📅 Pulang</label>
+              <label class="btn btn-outline-primary w-100" for="pulang">📅 Pulang</label>
             </div>
             <div class="col-6">
               <input type="radio" class="btn-check" name="tipePresensi" id="sakit" value="Sakit" autocomplete="off" onchange="handleRadioChange(this)">
@@ -242,6 +231,7 @@
         const btn = document.querySelector('button[onclick="login()"]');
         btn.innerHTML = "⌛ Mengecek...";
         btn.disabled = true;
+        document.getElementById("error").innerText = ""; // Bersihkan pesan error sebelumnya
 
         try {
           const response = await fetch(APPS_SCRIPT_URL, {
@@ -253,18 +243,17 @@
           btn.innerHTML = "🔓 Masuk";
           btn.disabled = false;
 
-          if (data.status) {
+          if (data.status === true) {
             userData = data;
             document.getElementById("nama").innerText = data.nama;
             document.getElementById("program_pelatihan").innerText = data.program_pelatihan;
             document.getElementById("kejuruan").innerText = data.kejuruan;
-            document.getElementById("instruktur").innerText = data.instruktur;
             document.getElementById("pic").innerText = data.pic;
 
             document.getElementById("loginDiv").classList.add("hidden");
             document.getElementById("dataDiv").classList.remove("hidden");
           } else {
-            document.getElementById("error").innerText = "❌ Password Salah!";
+            document.getElementById("error").innerText = "❌ Password Salah atau Tidak Ditemukan!";
           }
         } catch (err) {
           btn.innerHTML = "🔓 Masuk";
@@ -297,7 +286,7 @@
         modal.classList.remove("active");
 
         const badge = document.getElementById("statusBadge");
-        badge.innerText = "Luring"; // Disesuaikan dengan status
+        badge.innerText = "Luring"; 
         badge.className = "status-badge " + (mode === "WFO" ? "bg-wfo" : "bg-wfa");
         
         document.getElementById("workStatusDisplay").classList.remove("hidden");
